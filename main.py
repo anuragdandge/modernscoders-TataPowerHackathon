@@ -1,6 +1,6 @@
 
 import googleapiclient.discovery
-
+from textblob import TextBlob
 # credentials
 api_key = "AIzaSyAwOACQuQbx5xqXQ2z2mPGj_FusMJ0yet0"
 
@@ -25,19 +25,20 @@ for searched_id in search_id_res.get("items", []):
     vid = searched_id["id"]["videoId"]
     vid_list.append(vid)
 
-# print(vid_list)
+print(vid_list)
 
 for vid in vid_list:
-    print("\nVideo ID = " + vid)
+    print("Video ID = " + vid)
 
     video_response = youtube.videos().list(
         id=vid,
         part="snippet"
     ).execute()
 
+    
     snippet = video_response['items'][0]['snippet']
     vtitle = snippet['title']
-    print("Video Title " + vtitle + "\n")
+    print("\n Video Title " + vtitle)
     # Check if comments are enabled or disabled
     if snippet.get('commentModerationStatus') == "blocked":
         print("Comments are disabled for this video.")
@@ -53,11 +54,23 @@ for vid in vid_list:
         try:
             comment_response = search_comment_id.execute()
             for comment_thread in comment_response.get("items", []):
-                print("\nComment ID " + comment_thread["id"])
-                print("Author ID " + comment_thread["snippet"]
-                      ["topLevelComment"]["snippet"]["authorChannelId"]["value"])
-                print("Comment :"+comment_thread["snippet"]
-                      ["topLevelComment"]["snippet"]["textDisplay"])
+                cid = comment_thread["id"]
+                autherId = comment_thread["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
+                comment = comment_thread["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+                print("\n Comment ID = " + cid)
+                print("Author ID =  " +autherId )
+                print("Comment = "+comment)
+                analysis = TextBlob(comment)
+                polarity = analysis.sentiment.polarity
+                if polarity > 0.5:
+                    sentiment = "Positive"
+                elif polarity == 0.0:
+                    sentiment = "Neutral"
+                elif polarity < 0.5:
+                    sentiment = "Negative"
+                print("Sentiment: " + sentiment)
+                print("Polarity: " + str(polarity) + "\n")    
+            
                 # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         except googleapiclient.errors.HttpError as e:
             # Handle errors if comments retrieval fails
